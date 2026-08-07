@@ -91,7 +91,7 @@ function About() {
 
             <div className="flex">
               <span className="text-blue-400 font-semibold min-w-[85px]">🌐 Website:</span>
-              <span className="break-all">yoursite.com</span>
+              <span className="break-all">samarthportfolio-phi.vercel.app</span>
             </div>
 
             <div className="flex">

@@ -7,8 +7,9 @@ import {
   FaGithub,
   FaLinkedin,
 } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import emailjs from "@emailjs/browser";
 
 function Contact() {
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,8 @@ function Contact() {
   });
 
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState(false);
+
+  const [isSending, setIsSending] = useState(false);
 
   // 🔥 LOADER TIMER
   useEffect(() => {
@@ -72,214 +74,272 @@ function Contact() {
 
   // ✅ NORMAL PAGE
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+
+  setForm((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  setErrors((prev) => ({
+    ...prev,
+    [name]: "",
+  }));
+};
 
   const validate = () => {
     let err = {};
-    if (!form.name) err.name = "Name is required";
-    if (!form.email) err.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = "Invalid email";
-    if (!form.message) err.message = "Message is required";
+
+    if (!form.name.trim()) err.name = "Name is required";
+
+    if (!form.email.trim()) {
+      err.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      err.email = "Invalid email";
+    }
+
+    if (!form.subject.trim()) {
+      err.subject = "Subject is required";
+    }
+
+    if (!form.message.trim()) {
+      err.message = "Message is required";
+    }
+
     return err;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const err = validate();
+
     if (Object.keys(err).length > 0) {
       setErrors(err);
       toast.error("Fix errors ❌");
       return;
     }
 
-    setSuccess(true);
-    toast.success("Message sent 🚀");
+    setIsSending(true);
 
-    setForm({ name: "", email: "", subject: "", message: "" });
-    setErrors({});
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          from_name: form.name,
+          from_email: form.email,
+          subject: form.subject,
+          message: form.message,
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
 
-    setTimeout(() => setSuccess(false), 2500);
+      toast.success("Message sent successfully 🚀");
+
+      setForm({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+
+      setErrors({});
+
+    } catch (error) {
+      console.error("EmailJS Error:", error.text || error.message || error);
+      toast.error("Failed to send message ❌");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
-  <section className="min-h-screen bg-black text-white px-6 py-16">
+    <section className="min-h-screen bg-black text-white px-6 py-16">
 
-    {/* CONTACT HEADER */}
-    <div className="max-w-6xl mx-auto">
+      {/* CONTACT HEADER */}
+      <div className="max-w-6xl mx-auto">
 
-      <motion.div
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          Contact <span className="text-blue-500">Me</span>
-        </h1>
-
-        <p className="text-gray-400 max-w-2xl mb-12">
-          Feel free to contact me for collaborations, freelance work,
-          internships or any project discussion 🚀
-        </p>
-      </motion.div>
-
-      {/* MAIN GRID */}
-      <div className="grid md:grid-cols-2 gap-12">
-
-        {/* LEFT SIDE */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-6"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
         >
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            Contact <span className="text-blue-500">Me</span>
+          </h1>
 
-          <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
-            <FaMapMarkerAlt className="text-blue-400 text-xl" />
-            <p>Baggon, Post: Kalbhag, Kumta, Uttara Kannada</p>
-          </div>
-
-          <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
-            <FaPhoneAlt className="text-green-400 text-xl" />
-            <p>+91 8901559500</p>
-          </div>
-
-          <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
-            <FaEnvelope className="text-red-400 text-xl" />
-            <p className="break-all">
-              naiksamarth1849@email.com
-            </p>
-          </div>
-
-          {/* SOCIALS */}
-          <div className="flex gap-6 text-2xl pt-4">
-
-            <a
-              href="https://www.instagram.com/_samarth.08___?igsh=MThqZTAybm5mdWMyeg=="
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-pink-500 transition"
-            >
-              <FaInstagram />
-            </a>
-
-            <a
-              href="https://github.com/SamarthNaik-08"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-400 transition"
-            >
-              <FaGithub />
-            </a>
-
-            <a
-              href="https://linkedin.com/in/yourusername"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-blue-500 transition"
-            >
-              <FaLinkedin />
-            </a>
-
-          </div>
+          <p className="text-gray-400 max-w-2xl mb-12">
+            Feel free to contact me for collaborations, freelance work,
+            internships or any project discussion 🚀
+          </p>
         </motion.div>
 
-        {/* RIGHT SIDE FORM */}
-        <motion.form
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
+        {/* MAIN GRID */}
+        <div className="grid md:grid-cols-2 gap-12">
 
-          <div>
-            <input
-              type="text"
-              name="name"
-              placeholder="Your Name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
-            />
-
-            {errors.name && (
-              <p className="text-red-400 text-sm mt-2">
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Your Email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
-            />
-
-            {errors.email && (
-              <p className="text-red-400 text-sm mt-2">
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <input
-              type="text"
-              name="subject"
-              placeholder="Subject"
-              value={form.subject}
-              onChange={handleChange}
-              className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-  <textarea
-    name="message"
-    rows="3"
-    placeholder="Your Message"
-    value={form.message}
-    onChange={handleChange}
-    className="
-      w-full
-      px-4
-      py-3
-      bg-black/30
-      border border-white/20
-      rounded-xl
-      text-white
-      placeholder-gray-400
-      focus:outline-none
-      focus:border-blue-500
-      transition
-      resize-none
-    "
-  />
-
-  {errors.message && (
-    <p className="text-red-400 text-sm mt-1">
-      {errors.message}
-    </p>
-  )}
-</div>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-semibold"
+          {/* LEFT SIDE */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
           >
-            Send Message 🚀
-          </motion.button>
 
-        </motion.form>
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
+              <FaMapMarkerAlt className="text-blue-400 text-xl" />
+              <p>Baggon, Post: Kalbhag, Kumta, Uttara Kannada</p>
+            </div>
 
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
+              <FaPhoneAlt className="text-green-400 text-xl" />
+              <p>+91 8901559500</p>
+            </div>
+
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl border border-white/10">
+              <FaEnvelope className="text-red-400 text-xl" />
+              <p className="break-all">
+                naiksamarth1849@gmail.com
+              </p>
+            </div>
+
+            {/* SOCIALS */}
+            <div className="flex gap-6 text-2xl pt-4">
+
+              <a
+                href="https://www.instagram.com/_samarth.08___?igsh=MThqZTAybm5mdWMyeg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-pink-500 transition"
+              >
+                <FaInstagram />
+              </a>
+
+              <a
+                href="https://github.com/SamarthNaik-08"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-400 transition"
+              >
+                <FaGithub />
+              </a>
+
+              <a
+                href="https://linkedin.com/in/samarth-naik-1561363a0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-500 transition"
+              >
+                <FaLinkedin />
+              </a>
+
+            </div>
+          </motion.div>
+
+          {/* RIGHT SIDE FORM */}
+          <motion.form
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+
+            <div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Your Name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
+              />
+
+              {errors.name && (
+                <p className="text-red-400 text-sm mt-2">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Your Email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
+              />
+
+              {errors.email && (
+                <p className="text-red-400 text-sm mt-2">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                name="subject"
+                placeholder="Subject"
+                value={form.subject}
+                onChange={handleChange}
+                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-blue-500"
+              />
+
+              {errors.subject && (
+                <p className="text-red-400 text-sm mt-2">
+                  {errors.subject}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <textarea
+                name="message"
+                rows="5"
+                placeholder="Your Message"
+                value={form.message}
+                onChange={handleChange}
+                className="
+                w-full
+                px-4
+                py-3
+                bg-black/30
+                border border-white/20
+                rounded-xl
+                text-white
+                placeholder-gray-400
+                focus:outline-none
+                focus:border-blue-500
+                transition
+                resize-none"
+              />
+
+              {errors.message && (
+                <p className="text-red-400 text-sm mt-1">
+                  {errors.message}
+                </p>
+              )}
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={isSending}
+              whileHover={!isSending ? { scale: 1.05 } : {}}
+              whileTap={!isSending ? { scale: 0.95 } : {}}
+              className={`px-8 py-3 rounded-lg font-semibold transition-all duration-300 ease-in-out ${isSending
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-500 to-purple-500"
+                }`}
+            >
+              {isSending ? "Sending..." : "Send Message 🚀"}
+            </motion.button>
+
+          </motion.form>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 }
 
 export default Contact;
